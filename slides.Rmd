@@ -1,0 +1,301 @@
+---
+title: "RStudio v1.1 -- What's New"
+subtitle: "Exploring new features in v1.1 of the RStudio IDE"
+author: "Kevin Ushey"
+date: "`r Sys.Date()`"
+output:
+  xaringan::moon_reader:
+    css: ['default', 'default-fonts', 'styles.css']
+    chakra: libs/remark-latest.min.js
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE, include = FALSE)
+if (!file.exists("libs"))
+  xaringan::summon_remark()
+```
+
+class: center, bottom, inverse
+background-image: url(img/friendly-hills.jpg)
+background-position: 50% 20%
+
+Hello! Pleased to meet you. My name's Kevin, and I am a software engineer
+at RStudio. I primarily work on the RStudio IDE.
+
+I'm here to teach you about one year of IDE features in 20 minutes.
+
+Wish me luck!
+
+---
+
+# What's New?
+
+I'm here to give you a tour of the new features that became part of the
+v1.1 release of the RStudio IDE. With this release, we now have:
+
+--
+
+- A **Terminal** tab, giving you access to a shell directly within the IDE,
+
+--
+
+- An **Object Explorer**, for inspecting deeply-nested R objects,
+
+--
+
+- A **modern theme**, including a dark IDE theme to accompany the dark editor themes,
+
+--
+
+- A **Connections** tab, for managing connections to external SQL data stores,
+
+--
+
+- Improvements to **Git** integration, making it easier to manage `git` branches from within the IDE, and
+
+--
+
+- A host of other useful miscellaneous features.
+
+--
+
+I'll be demoing most of these tools live, directly from the RStudio IDE. Let's get started!
+
+---
+
+# Terminal Tab
+
+R is an excellent tool, but it's not the best tool for all jobs. Sometimes, you just need a command line. The **terminal** gives you just that.
+
+![terminal](img/terminal.png)
+
+It's easy to send commands from an RStudio editor to the terminal. Just use <kbd>Ctrl + Alt + Enter</kbd>, or a plain <kbd>Ctrl + Enter</kbd> when working with a shell script.
+
+---
+
+# Object Explorer
+
+You may be familiar with the **Data Viewer**, which makes it easy to explore `R` `data.frame`s...
+
+![data-viewer](img/data-viewer.png)
+
+---
+
+# Object Explorer
+
+However, with RStudio v1.1, it's now possible to explore R `list`s (and other hierarchical objects) using the **Object Explorer**.
+
+![object-explorer](img/object-explorer.png)
+
+Let's use this to learn a bit about what a [ggplot2](http://ggplot2.org/) plot object looks like.
+
+```{r}
+library(ggplot2)
+p <- ggplot(mtcars, aes(x = mpg, y = cyl)) +
+  geom_point()
+View(p)
+```
+
+---
+
+# Modern Theme
+
+RStudio v1.1 also comes with a brand new modern theme, with a 'flat' styling applied throughout.
+
+_If you're allergic to change, the classic theme is still available!_
+
+![theme-options](img/theme-options.png)
+
+But perhaps even more exciting is the _dark theme_.
+
+---
+
+class: center, bottom, inverse
+
+<img src="img/rstudio-dark-theme.png" height=400 />
+
+# Dark Theme
+
+---
+
+# Connections
+
+The **Connections** pane helps you manage connections to existing data stores, making it easy to slurp data from an external source into your R session.
+
+![connections](img/connections.png)
+
+---
+
+# Connections
+
+There is a bit of setup required to teach RStudio how to communicate with your data sources. I'm going to focus on the [odbc](https://github.com/r-dbi/odbc) package and its connections interface.
+
+A brief description of [what ODBC is](https://en.wikipedia.org/wiki/Open_Database_Connectivity), from Wikipedia:
+
+> In computing, Open Database Connectivity (ODBC) is a standard application programming interface (API) for accessing database management systems (DBMS).
+
+The [odbc](https://github.com/r-dbi/odbc) R package gives your R session access to databases through the ODBC API.
+
+---
+
+# Connections
+
+If you want to use the [odbc](https://github.com/r-dbi/odbc) package, there's a bit of setup that you need to do first, to teach R and ODBC about the database connections available on your machine.
+
+The full documentation is available at http://db.rstudio.com, but the incredibly short version of that documentation is:
+
+--
+
+1. Declare the database drivers you want to use in `odbcinst.ini`,
+
+--
+
+2. Declare the actual database connections you'll be making in `odbc.ini`,
+
+--
+
+3. Create a connection from the connections pane.
+
+--
+
+On my macOS machine, these files are located at:
+
+- `/usr/local/etc/odbcinst.ini`
+- `/usr/local/etc/odbc.ini`
+
+You can execute `odbcinst -j` to check where yours live.
+
+---
+
+# Connections
+
+I'll be using a database of Shakespeare's works provided by Open Source Shakespeare, at https://www.opensourceshakespeare.org.
+
+We'll use the [DBI](https://db.rstudio.com/dbi) package to access and query tables in this database.
+
+```{r, eval=TRUE, include=TRUE}
+library(DBI)
+conn <- dbConnect(odbc::odbc(), "Open Source Shakespeare")
+dbListTables(conn)
+```
+
+---
+
+# Connections
+
+Let's pull a table out and take a look with [dplyr](http://dplyr.tidyverse.org/).
+
+```{r, eval=TRUE}
+library(dplyr)
+```
+
+```{r, eval=TRUE, include=TRUE}
+work_tbl <- tbl(conn, "work")
+
+# what kinds of works are in this db?
+work_tbl %>%
+  group_by(genretype) %>%
+  summarise(n = n())
+```
+
+
+---
+
+# Connections
+
+In short: does your organization have a giant bucket of data hiding in a SQL data store somewhere? Want to get it into R? [odbc](https://github.com/r-dbi/odbc) may be your new best friend.
+
+--
+
+Need to access a database for which open-source drivers are not available? Consider our professional drivers.
+
+- https://www.rstudio.com/products/drivers
+
+Use the **connections** pane to manage connections to your organization's external data stores, and use the [database](https://db.rstudio.com) family of R packages to manipulate and analyze the data hiding within.
+
+---
+
+# Git
+
+Prior to RStudio v1.1, it was possible to manage _existing_ branches within a project, but _creating_ a branch required the command line. No more!
+
+![git-create-branch](img/git-create-branch.png)
+
+---
+
+# Git
+
+It's now possible to search existing branches, which becomes more important as your project adds new collaborators, with parallel work on different features.
+
+![git-switch-branch](img/git-switch-branch.png)
+
+---
+
+# Miscellaneous Items
+
+There are also a number of small 'quality-of-life' features that made their way into the v1.1 release of RStudio, which are worth knowing.
+
+---
+
+# Color in the Console
+
+![color-console](img/color-console.png)
+
+---
+
+# Addins List
+
+[RStudio Addins](https://rstudio.github.io/rstudioaddins/) were an RStudio v1.0 feature that made it possible for users to write simple RStudio plugins that are able to interact directly with RStudio, and even bind their execution to keyboard shortcuts.
+
+So, technically, this is not a new feature.
+
+<img src="img/addins-v10.png" height=300></img>
+
+---
+
+# Addins List
+
+However, the popularity of RStudio Addins grew far beyond what we initially anticipated, so the original menu was hardly adequate for users with more than a couple addins installed. Now, addins are searchable, and indicate the package they are associated with.
+
+![addins-v11](img/addins-v11.png)
+
+---
+
+# Searchable Command History
+
+The commands you've run get saved into a command history. Need to recall something you wrote a while back? Use <kbd>Ctrl + R</kbd> with the cursor in the Console pane to search that list.
+
+![command-history](img/command-history.png)
+
+---
+
+# Project Templates
+
+It's now possible for R packages to define project templates, which makes it easy to initialize new kinds of projects from within RStudio.
+
+Feel like starting on a new book? Let [bookdown](https://bookdown.org/yihui/bookdown/) get your project ready for you.
+
+<img src="img/project-templates.png" height=300></img>
+
+---
+
+class: center, bottom, inverse
+
+## https://github.com/kevinushey/2018-rstudio-conf
+
+<br/>
+
+# Thanks!
+
+Download the latest RStudio release at:<br/>https://www.rstudio.com/products/rstudio/download
+
+Stay in touch with the IDE team! Join us at:<br/>https://community.rstudio.com/c/rstudio-ide
+
+New to RStudio? Check out the slides from my 2017 `rstudio::conf` talk at:<br/>https://rawgit.com/kevinushey/2017-rstudio-conf/master/slides.html
+
+And finally, find these slides available at:<br/>https://rawgit.com/kevinushey/2018-rstudio-conf/master/slides.html
