@@ -6,7 +6,7 @@ date: "`r Sys.Date()`"
 output:
   xaringan::moon_reader:
     css: ['default', 'default-fonts', 'styles.css']
-    lib_dir: libs
+    self_contained: true
     nature:
       highlightStyle: github
       highlightLines: true
